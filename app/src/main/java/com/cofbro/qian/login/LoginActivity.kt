@@ -88,7 +88,7 @@ class LoginActivity : BaseActivity<LoginViewModel, ActivityLoginBinding>() {
             • 个人中心 → 预留地址: 设置常用签到位置
             • 个人中心 → 代签所有绑定账号: 开启后主号签到
               成功会自动为已绑定的其他账号代签
-            • 个人中心 → IM监听: 后台监听群聊签到通知
+            • 首页右上角 LOG: 查看签到报告/操作日志
 
             更多帮助: 个人中心 → 📖 使用攻略
         """.trimIndent()

@@ -9,24 +9,23 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
-          distribution: 'adopt'
+          distribution: 'temurin'
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
       - name: Build debug apk with Gradle
-        uses: gradle/gradle-command-action@v2
-        with:
-          arguments: assembleDebug
+        run: ./gradlew :app:assembleDebug --no-daemon
 
       - name: Upload debug apk to artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: ${{github.workspace}}/app/build/outputs/apk/debug/*.apk
+          # 产物目录带版本号(build/app_v<版本>/), 用通配符匹配
+          path: build/app_v*/outputs/apk/debug/*.apk

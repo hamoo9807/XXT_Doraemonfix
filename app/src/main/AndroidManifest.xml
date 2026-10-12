@@ -22,13 +22,10 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
-    <!-- 环信IM所需权限 -->
+    <!-- 高德定位SDK底层可能用到(保留以防定位崩溃) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:name=".App"
@@ -66,21 +63,18 @@
         </activity>
         <activity android:name=".profile.update.UpdateDetailActivity"/>
         <activity android:name=".wrapper.did.DoHomeworkActivity" />
-        <activity android:name=".scan.ScanActivity" />
+        <activity
+            android:name=".scan.ScanActivity"
+            android:screenOrientation="portrait" />
         <activity android:name=".account.manager.AccountManagerActivity" android:windowSoftInputMode="adjustResize" />
         <activity android:name=".wrapper.WrapperActivity" />
         <activity android:name=".profile.ProfileFragment" />
         <activity android:name=".mapsetting.InputTipsActivity" />
         <activity android:name=".mapsetting.MapActivity" />
         <activity android:name=".photo.PhotoSignActivity" />
-        <activity android:name=".record.SignRecordActivity" />
         <activity android:name=".login.sms.SMSActivity" />
-        <!-- 群聊签到 -->
-        <activity android:name=".im.GroupListActivity" />
-        <activity android:name=".im.GroupDetailActivity" />
-        <activity android:name=".im.GroupSignRedirectActivity" />
         <activity
-            android:name=".im.ImportOtherUserActivity"
+            android:name=".account.ImportOtherUserActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -90,12 +84,6 @@
             </intent-filter>
         </activity>
         <service android:name="com.amap.api.location.APSService" />
-        <!-- IM监听服务 -->
-        <service
-            android:name=".im.IMMonitorService"
-            android:enabled="true"
-            android:exported="false"
-            android:foregroundServiceType="dataSync" />
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.cofbro.qian.fileprovider"

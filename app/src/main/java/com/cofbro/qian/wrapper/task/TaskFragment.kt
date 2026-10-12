@@ -20,8 +20,8 @@ import com.cofbro.qian.utils.AccountManager
 import com.cofbro.qian.utils.NativeLocationUtils
 import com.cofbro.qian.utils.CacheUtils
 import com.cofbro.qian.utils.Constants
+import com.cofbro.qian.utils.DebugLogCollector
 import com.cofbro.qian.utils.HtmlParser
-import com.cofbro.qian.utils.SignRecorder
 import com.cofbro.qian.utils.getJSONArrayExt
 import com.cofbro.qian.utils.getStringExt
 import com.cofbro.qian.utils.safeParseToJson
@@ -44,14 +44,11 @@ import java.net.URLEncoder
  * 2023.10.6
  */
 class TaskFragment : BaseFragment<TaskViewModel, FragmentTaskBinding>() {
-    private var signWithHasFailed = false
     private var latitude = 0.0
     private var longitude = 0.0
     private var locationText = ""
     private var location = ""
-    private var remark = ""
     private var qrCodeId = ""
-    private var alreadySign = false
 
     // 签到的aid
     private var id = ""
@@ -97,7 +94,6 @@ class TaskFragment : BaseFragment<TaskViewModel, FragmentTaskBinding>() {
 
     private fun initArgs() {
         activity = requireActivity() as WrapperActivity
-        SignRecorder.init(requireContext())
     }
 
     private fun initView() {
@@ -194,10 +190,8 @@ class TaskFragment : BaseFragment<TaskViewModel, FragmentTaskBinding>() {
         viewModel.signLiveData.observe(this) {
             lifecycleScope.launch(Dispatchers.IO) {
                 val data = it.data?.body?.string() ?: ""
+                DebugLogCollector.d("Task", "签到响应: $data")
                 withContext(Dispatchers.Main) {
-                    // 表示签过到，可以再次io
-                    alreadySign = true
-                    signRecord(data)
                     responseUI(data)
                     // 开始代签
                     startSignTogether(data)
@@ -206,21 +200,16 @@ class TaskFragment : BaseFragment<TaskViewModel, FragmentTaskBinding>() {
         }
     }
 
-    override fun onStop() {
-        SignRecorder.writeJson(requireContext())
-        super.onStop()
-    }
-
     private suspend fun startSignTogether(data: String) {
         val signWith = requireActivity().getBySp("signWith")?.toBoolean() ?: false
         if (signWith && (data.contains("success") || data.contains("签到成功"))) {
-            signWithHasFailed = false
             showLoadingView()
             proxy()
         }
     }
 
     private suspend fun signDirectly() {
+        DebugLogCollector.d("Task", "提交签到: aid=$id, signCode=$code")
         viewModel.preSign(preSignUrl)
         viewModel.request(URL.checkSignCodePath(id, code))
         // 签到
@@ -230,8 +219,11 @@ class TaskFragment : BaseFragment<TaskViewModel, FragmentTaskBinding>() {
     private suspend fun responseUI(data: String) {
         hideLoadingView()
         data.showSignResult()
-        // 清除dialog
-        codeDialog?.dismiss()
+        // ★ 签到码输错时不关弹窗, 允许原地改码重试(手势码的重试由 responseGestureDialog 处理)
+        if (data.contains("success") || data.contains("成功")) {
+            codeDialog?.dismiss()
+            codeDialog = null
+        }
         responseGestureDialog(data)
     }
 
@@ -276,6 +268,11 @@ class TaskFragment : BaseFragment<TaskViewModel, FragmentTaskBinding>() {
         val type = itemData?.getStringExt(Constants.SIGN.OTHER_ID)
         val ifPhoto = itemData?.getStringExt(Constants.SIGN.IF_PHOTO)
         id = itemData?.getStringExt(Constants.SIGN.ID) ?: ""
+        DebugLogCollector.section("课件签到 aid=$id 类型=$type")
+        // ★ 开始新活动的签到流程前, 清掉上一次残留的手势码/签到码/扫码结果
+        // 下面 analysisLiveData 是用 code.isNotEmpty() 判断走哪条分支的, 不清空会拿旧码去签新活动
+        code = ""
+        qrCodeId = ""
         when (type) {
             // 二维码签到
             Constants.SIGN.SCAN_QR -> {
@@ -417,6 +414,7 @@ class TaskFragment : BaseFragment<TaskViewModel, FragmentTaskBinding>() {
             setCancelable(false)
             setPositiveClickListener {
                 showLoadingView()
+                DebugLogCollector.d("Task", "输入签到码: $it")
                 lifecycleScope.launch(Dispatchers.IO) {
                     code = it
                     analysisAndStartSign(id)
@@ -455,6 +453,7 @@ class TaskFragment : BaseFragment<TaskViewModel, FragmentTaskBinding>() {
                 inputPwd.forEach {
                     inputCode += it.toString()
                 }
+                DebugLogCollector.d("Task", "输入手势码: $inputCode")
                 lifecycleScope.launch(Dispatchers.IO) {
                     code = inputCode
                     analysisAndStartSign(id)
@@ -476,10 +475,7 @@ class TaskFragment : BaseFragment<TaskViewModel, FragmentTaskBinding>() {
             val holder = TaskRunnableHolder(tasks)
             holder.submit()
             holder.blockingFetchingResult().forEachIndexed { index, result ->
-                remark = result?.remark ?: ""
                 val body = result?.body ?: ""
-                val cookies = result?.cookies ?: ""
-                signRecord(body, cookies)
                 if (body.contains("成功") || body.contains("success")) {
                     successCount++
                 } else {
@@ -489,6 +485,7 @@ class TaskFragment : BaseFragment<TaskViewModel, FragmentTaskBinding>() {
                     ToastUtils.show("代签进度: ${index + 1}/$totalCount")
                 }
             }
+            DebugLogCollector.d("Task", "代签完成: 成功$successCount 失败$failCount 共$totalCount")
             withContext(Dispatchers.Main) {
                 hideLoadingView()
                 ToastUtils.show("代签完成: 成功$successCount 失败$failCount 共$totalCount")
@@ -528,28 +525,6 @@ class TaskFragment : BaseFragment<TaskViewModel, FragmentTaskBinding>() {
             }
         }
         return allSignUsers
-    }
-
-    private fun signRecord(body: String, cookies: String = "") {
-        if (!alreadySign) return
-        val uid = if (cookies.isEmpty()) CacheUtils.cache["uid"] ?: "" else findUID(cookies)
-        val status = body.contains("成功") || body.contains("success")
-        if (!status) {
-            signWithHasFailed = true
-        }
-        record(uid, status)
-    }
-
-    private fun record(uid: String, status: Boolean) {
-        val courseName = activity?.courseName ?: ""
-        val statusName = if (status) "成功" else "失败"
-        val username = if (remark.isNotEmpty()) "$uid - ($remark)" else uid
-        SignRecorder.record(requireContext(), username, courseName, statusName)
-    }
-
-    private fun findUID(cookies: String): String {
-        val uid = cookies.substringAfter("UID=")
-        return uid.substringBefore(";")
     }
 
     private suspend fun showChooseSignTypeDialog(aid: String, type: String) {

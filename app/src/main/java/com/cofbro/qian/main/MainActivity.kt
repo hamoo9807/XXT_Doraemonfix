@@ -8,7 +8,6 @@ import androidx.fragment.app.Fragment
 import com.cofbro.hymvvmutils.base.BaseActivity
 import com.cofbro.qian.R
 import com.cofbro.qian.databinding.ActivityMainBinding
-import com.cofbro.qian.home.GroupHomeFragment
 import com.cofbro.qian.home.HomeFragment
 import com.cofbro.qian.profile.ProfileFragment
 import com.cofbro.qian.utils.AmapUtils
@@ -19,7 +18,6 @@ import com.hjq.toast.ToastUtils
 
 class MainActivity : BaseActivity<MainViewModel, ActivityMainBinding>() {
     private var currentBackPressedTime = 0L
-    private var chatFragment: GroupHomeFragment? = null
     private var homeFragment: HomeFragment? = null
     private var settingsFragment: ProfileFragment? = null
     private var lastShowFragment: Fragment? = null
@@ -53,7 +51,6 @@ class MainActivity : BaseActivity<MainViewModel, ActivityMainBinding>() {
                         }
                         showFragment(homeFragment!!)
                     }
-                    R.id.tab_chat -> showFragment(chatFragment!!)
                     R.id.tab_settings -> {
                         if (settingsFragment == null) {
                             settingsFragment = ProfileFragment()
@@ -78,13 +75,6 @@ class MainActivity : BaseActivity<MainViewModel, ActivityMainBinding>() {
             .add(contentId, homeFragment!!, "HomeFragment")
             .commit()
         lastShowFragment = homeFragment
-
-        // 预加载聊天页
-        chatFragment = GroupHomeFragment()
-        supportFragmentManager.beginTransaction()
-            .add(contentId, chatFragment!!, "ChatFragment")
-            .hide(chatFragment!!)
-            .commit()
     }
 
     private fun showFragment(fragmentToShow: Fragment) {

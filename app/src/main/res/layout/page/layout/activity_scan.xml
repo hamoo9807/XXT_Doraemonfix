@@ -2,66 +2,64 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@android:color/black">
 
-    <cn.bingoogolapple.qrcode.zxing.ZXingView
-        android:id="@+id/scanner"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+    <!-- 全屏取景, 无扫描框: 画面内任意位置的二维码都可识别 -->
+    <androidx.camera.view.PreviewView
+        android:id="@+id/preview_view"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:qrcv_animTime="1000"
-        app:qrcv_barCodeTipText="将条码放入框内，即可自动扫描"
-        app:qrcv_barcodeRectHeight="120dp"
-        app:qrcv_borderColor="@color/black"
-        app:qrcv_borderSize="1dp"
-        app:qrcv_cornerColor="@color/black"
-        app:qrcv_cornerDisplayType="center"
-        app:qrcv_cornerLength="20dp"
-        app:qrcv_cornerSize="3dp"
-        app:qrcv_isAutoZoom="true"
-        app:qrcv_isBarcode="false"
-        app:qrcv_isOnlyDecodeScanBoxArea="false"
-        app:qrcv_isScanLineReverse="true"
-        app:qrcv_isShowDefaultGridScanLineDrawable="false"
-        app:qrcv_isShowDefaultScanLineDrawable="true"
-        app:qrcv_isShowLocationPoint="true"
-        app:qrcv_isShowTipBackground="true"
-        app:qrcv_isShowTipTextAsSingleLine="false"
-        app:qrcv_isTipTextBelowRect="false"
-        app:qrcv_maskColor="#33FFFFFF"
-        app:qrcv_qrCodeTipText="将二维码/条码放入框内，即可自动扫描"
-        app:qrcv_rectWidth="200dp"
-        app:qrcv_scanLineColor="@color/black"
-        app:qrcv_scanLineMargin="0dp"
-        app:qrcv_scanLineSize="0.5dp"
-        app:qrcv_tipTextColor="@color/black"
-        app:qrcv_tipTextSize="12sp"
-        app:qrcv_verticalBias="0.5" >
-    </cn.bingoogolapple.qrcode.zxing.ZXingView>
+        app:layout_constraintTop_toTopOf="parent" />
 
     <ImageView
         android:id="@+id/iv_to_photo"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
+        android:contentDescription="相册"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_photo" />
+        app:srcCompat="@drawable/ic_photo"
+        app:tint="@android:color/white" />
+
+    <ImageView
+        android:id="@+id/iv_flash"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_marginTop="20dp"
+        android:contentDescription="闪光灯"
+        app:layout_constraintEnd_toEndOf="@+id/iv_to_photo"
+        app:layout_constraintTop_toBottomOf="@+id/iv_to_photo"
+        app:srcCompat="@drawable/ic_flash_off"
+        app:tint="@android:color/white" />
 
     <ImageView
         android:id="@+id/iv_back"
         android:layout_width="24dp"
         android:layout_height="24dp"
         android:layout_marginStart="16dp"
-        android:src="@drawable/back"
+        android:contentDescription="返回"
         app:layout_constraintBottom_toBottomOf="@+id/iv_to_photo"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/iv_to_photo" />
+        app:layout_constraintTop_toTopOf="@+id/iv_to_photo"
+        app:srcCompat="@drawable/back"
+        app:tint="@android:color/white" />
 
+    <TextView
+        android:id="@+id/tv_scan_tip"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="60dp"
+        android:text="对准二维码即可自动识别"
+        android:textColor="@android:color/white"
+        android:textSize="14sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

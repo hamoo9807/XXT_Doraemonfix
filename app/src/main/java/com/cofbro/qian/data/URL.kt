@@ -129,21 +129,6 @@ object URL {
     // POST签到基础URL
     const val SIGN_POST_URL = "https://mobilelearn.chaoxing.com/pptSign/stuSignajax"
 
-    // 获取课程最近签到活动(v2接口)
-    fun getActiveListPath(courseId: String, classId: String): String =
-        "https://mobilelearn.chaoxing.com/v2/apis/active/student/activelist?fid=0&courseId=$courseId&classId=$classId"
-
-    // 人脸识别结果检查(获取faceEnc)
-    const val CHECK_FACE_RESULT_URL = "https://mobilelearn.chaoxing.com/pptSign/check-face-result"
-
-    // 签到详细信息(含ifNeedVCode, openCheckFaceFlag等)
-    const val SIGN_INFO_URL = "https://mobilelearn.chaoxing.com/v2/apis/active/getPPTActiveInfo"
-
-    // IM相关接口
-    // 获取IM参数(myName, myToken, myTuid)
-    const val IM_ME_URL = "https://im.chaoxing.com/webim/me"
-    // 环信AppKey
-    const val IM_APP_KEY = "cx-dev#cxstudy"
     // 预签到
     fun getPreSignPath(courseId: String, classId: String, activeId: String, uid: String): String =
         "https://mobilelearn.chaoxing.com/newsign/preSign?courseId=$courseId&classId=$classId&activePrimaryId=$activeId&general=1&sys=1&ls=1&appType=15&tid=&uid=$uid&ut=s"

@@ -1,4 +1,4 @@
-package com.cofbro.qian.im
+package com.cofbro.qian.account
 
 import android.os.Bundle
 import android.widget.Toast
@@ -7,9 +7,7 @@ import androidx.lifecycle.lifecycleScope
 import com.alibaba.fastjson.JSONObject
 import com.cofbro.qian.data.URL
 import com.cofbro.qian.utils.AccountManager
-import com.cofbro.qian.utils.CacheUtils
 import com.cofbro.qian.utils.NetworkUtils
-import com.cofbro.qian.utils.safeParseToJson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -61,11 +59,8 @@ class ImportOtherUserActivity : AppCompatActivity() {
     private fun importUser(phone: String, pwd: String, name: String) {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                // 验证账号、获取用户信息
-                val infoUrl = URL.getPuidPath()
-                val resp = NetworkUtils.request(NetworkUtils.buildClientRequest(infoUrl))
-                val body = resp.data?.body?.string() ?: ""
-                // 验证失败不影响导入
+                // 校验登录态(失败不影响导入)
+                NetworkUtils.request(NetworkUtils.buildClientRequest(URL.getPuidPath()))
                 val account = JSONObject().apply {
                     put("username", name)
                     put("password", AccountManager.encryptPassword(pwd))

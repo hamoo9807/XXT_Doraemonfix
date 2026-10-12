@@ -1,15 +1,30 @@
-*.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
+# ---- 构建产物 ----
 /build
+/app/build
+/apk
 /captures
 .externalNativeBuild
 .cxx
+*.hprof
+
+# ---- 本地配置(含本机 SDK 路径, 不入库) ----
 local.properties
+
+# ---- 签名文件(千万不要外传) ----
+*.jks
+*.keystore
+signingkey.jks
+
+# ---- IDE ----
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# ---- 系统 ----
+.DS_Store
+Thumbs.db
+
+# ---- 本地工具 ----
+.claude/

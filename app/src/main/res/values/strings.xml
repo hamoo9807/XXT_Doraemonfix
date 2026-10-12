@@ -9,26 +9,13 @@
     <string name="all_homework">所有作业</string>
 
     <string name="tab_home">主页</string>
-    <string name="tab_friend">好友</string>
     <string name="tab_profile">我的</string>
 
     <string name="pop_add_remark">添加备注</string>
     <string name="pop_delete">删除账号</string>
-    <string name="pop_request_option_sign">请求cookie代签(1天)</string>
-    <string name="pop_request_option_homework">请求作业</string>
 
     <string name="add_file">添加附件</string>
     <string name="submit_file">提 交</string>
-
-    <string name="advice_title">如何与我们取得联系？</string>
-    <string name="advice_qq_title">1. 我们拥有QQ群聊</string>
-    <string name="advice_qq_content">目前已经拥有 300+ 群友，在这里你可以发表任何关于技术或者使用体验方面的话题。无论您是否懂技术，欢迎随时加入我们！</string>
-    <string name="advice_qq_number">QQ群聊：567290278</string>
-    <string name="advice_github_title">2. Github当然必不可少</string>
-    <string name="advice_github_content">Github作为最出名的开源社区，当然不能少。如果您使用本软件的同时，恰好也喜欢技术，欢迎在fork后进行pr，或者您可以在issue中留下更好的建议！</string>
-    <string name="advice_github_number">Github地址：https://github.com/CofbroTeam/Doraemon</string>
-    <string name="advice_tip">点击蓝色字体可复制至剪切板</string>
-
 
     <string name="choose_sign_type_title">选择签到方式</string>
     <string name="choose_sign_type_subTitle">为了防止签到失败，我们提供了两种签到方式。请您选择一种签到方式，如果签到失败，请您更换签到方式。</string>
@@ -38,16 +25,6 @@
     <string name="account_add_remark_hint">点击输入备注</string>
     <string name="account_add_remark_title">添加备注</string>
     <string name="account_add_remark_content">为该账号添加备注后，可在日志页面快速查看代签账号是否签到成功。</string>
-
-    <string name="chat_request_cookie_sign_title">确定将cookie发送给对方吗？</string>
-    <string name="chat_request_cookie_sign_content">确定后会将cookie发送至对方，当对方签到时，会自动为自己代签(有效期1天)。</string>
-
-    <string name="cookie_sign_wait_dialog_user_title">为好友代签</string>
-    <string name="cookie_sign_wait_dialog_user_content">同意代签后，会在签到时帮他一起签到，有效时期1天。</string>
-    <string name="cookie_sign_wait_dialog_self_title_not_response">等待对方响应</string>
-    <string name="cookie_sign_wait_dialog_self_title_agree">对方已同意</string>
-    <string name="cookie_sign_wait_dialog_self_title_refuse">对方已拒绝</string>
-    <string name="cookie_sign_wait_dialog_self_content">对方同意后，当他签到时会自动帮你一起签到（需要让他打开代签按钮）。</string>
 
     <string name="update_detail_version_tip_latest">已是最新版本</string>
     <string name="update_detail_version_tip_not_latest">请更新至最新版本</string>
@@ -62,9 +39,6 @@
     <string name="auto_update_tip_no_more">不要再提示我</string>
     <string name="auto_update_update_right_now">立即更新</string>
     <string name="auto_update_update_later">以后再说</string>
-
-    <string name="search_friend_hint">点击搜索用户名字</string>
-    <string name="search_friend_cancel">取消</string>
 
     <string name="download_progress_title">软件版本更新</string>
     <string name="download_progress_content">更新详情可在检查更新中查看</string>

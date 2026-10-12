@@ -2,6 +2,8 @@
 
 基于 [CofbroTeam/Doraemon](https://github.com/CofbroTeam/Doraemon) 二次开发，参考 [aquamarine5/ChaoxingSignFaker](https://github.com/aquamarine5/ChaoxingSignFaker) 架构。
 
+> 更新记录见 [CHANGELOG.md](CHANGELOG.md)；安装包见仓库 Releases。
+
 ---
 
 ## 使用攻略
@@ -78,31 +80,11 @@
 
 ---
 
-### 7. IM 群聊监听
+### 7. 签到报告
 
-> 个人中心 → IM监听（开关）
+> 首页 LOG 或 个人中心 → 签到报告
 
-后台监听学习通群聊中的签到通知，自动签到。
-
----
-
-### 8. 预设照片（拍照/人脸签到）
-
-> 个人中心 → 预设照片 → 从相册选择
-
-用于拍照验证和人脸识别签到的自动绕过。
-
----
-
-### 9. 查签到
-
-首页 → 查签到 → 自动扫描所有课程进行中的签到活动 → 点击签到。
-
----
-
-### 10. 手动签到（Debug）
-
-首页 LOG → 手动签到。自动签到失败时可手动填写参数补签。
+查看签到全过程日志（智能签到、课件签到、手势/签到码、定位、代签），可一键复制。纯内存收集，不影响签到性能。
 
 ---
 
@@ -112,11 +94,12 @@
 |---|---|
 | 普通签到 | 直接提交 |
 | 二维码签到 | 扫码后自动解析 enc 提交 |
-| 手势签到 | 4~6 位不重复数字排列暴力枚举 |
-| 签到码 | 4~6 位数字组合暴力枚举 |
+| 手势签到 / 签到码 | 进课程活动列表，画出手势或输入签到码提交，输错可原地重试 |
 | 定位签到 | GPS + 预设地址 + WGS84/BD09 坐标转换 |
-| 拍照签到 | 预上传照片自动提交 |
-| 人脸识别 | 预设照片自动上传绕过 checkFace |
+| 拍照签到 | 进课程活动列表，从相册选图提交 |
+| 人脸识别 | 无法自动完成，签到报告会提示 |
+
+> 说明：需要人脸识别/拍照验证（防作弊）的签到不支持自动提交。
 
 ---
 
@@ -133,16 +116,43 @@
 
 ```
 app/src/main/java/com/cofbro/qian/
-  signer/      签到引擎 (BaseSigner, QRCodeSigner, LocationSigner, ProxySignManager)
-  im/          IM 监听与自动代签 (IMMonitorService, AutoSignHandler)
-  home/        首页与课程 (HomeFragment)
+  signer/      代签引擎 (ProxySignManager, ProxyUserClient, SignResult)
+  home/        首页与课程/扫码智能签到 (HomeFragment)
   profile/     配置与账号管理 (ProfileFragment)
-  account/     绑定账号 (AccountManagerActivity, AccountsAdapter)
+  account/     绑定账号 (AccountManagerActivity, AccountsAdapter, ImportOtherUserActivity)
   login/       登录 (LoginActivity, SMSActivity)
-  utils/       工具类 (NetworkUtils, CaptchaHelper, CacheUtils, CookieRefresher, ...)
-  view/        自定义View (VerifyCodeView, SliderCaptchaDialog, ...)
+  wrapper/     课程活动列表 (WrapperActivity, TaskFragment: 普通/手势/签到码/定位/拍照)
+  utils/       工具类 (NetworkUtils, CaptchaHelper, CacheUtils, CookieRefresher, DebugLogCollector, ...)
+  view/        自定义View (GestureInputView, SliderCaptchaDialog, SignReportDialog, ...)
   data/        API URL 定义
 ```
+
+---
+
+## 构建
+
+环境要求：
+
+| 项 | 说明 |
+|---|---|
+| JDK | 17（AGP 8.1.0 + Kotlin 1.8.0） |
+| Android SDK | compileSdk 33 / minSdk 24 / targetSdk 33 |
+| Gradle | 8.5（wrapper 自带，无需另装） |
+
+```bash
+# 1. 写入本机 SDK 路径(该文件不入库)
+echo "sdk.dir=<你的 Android SDK 路径>" > local.properties
+
+# 2. 打包(Windows 用 gradlew.bat)
+./gradlew :app:assembleDebug
+```
+
+产物与版本机制：
+
+- 版本号存于根目录 `version.properties`，`versionCode = 主版本 * 10000 + 次版本`
+- 每次构建输出到独立目录 `build/app_v<版本>/outputs/apk/...`，APK 命名为 `Doraemon-fix-v<版本>.apk`，并自动复制一份到根目录 `apk/`（不入库）
+- 构建成功后次版本号自动 +1（失败不消耗版本号）；升主版本手动改 `version.properties`
+- 高德 Key（可选）：在 `local.properties` 写入 `AMAP_API_KEY=xxx`，也可以在 App 内「个人中心 → 高德Key」配置；不配置时定位签到可能失败
 
 ---
 

@@ -6,17 +6,13 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.ViewGroup.MarginLayoutParams
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.widget.SwitchCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
-import com.hjq.toast.ToastUtils
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.request.RequestOptions
@@ -26,33 +22,22 @@ import com.cofbro.hymvvmutils.base.saveUsedSp
 import com.cofbro.qian.account.manager.AccountManagerActivity
 import com.cofbro.qian.data.URL
 import com.cofbro.qian.databinding.FragmentProfileBinding
-import com.cofbro.qian.im.IMMonitorService
 import com.cofbro.qian.login.LoginActivity
-import com.cofbro.qian.profile.advice.AdviceFragment
-import com.cofbro.qian.profile.update.UpdateDetailActivity
-import com.cofbro.qian.record.SignRecordActivity
 import com.cofbro.qian.utils.AccountManager
 import com.cofbro.qian.utils.AmapKeyStore
 import com.cofbro.qian.utils.CacheUtils
 import com.cofbro.qian.utils.Constants
 import com.cofbro.qian.utils.Downloader
-import com.cofbro.qian.utils.GlideEngine
 import com.cofbro.qian.utils.PresetLocationManager
 import com.cofbro.qian.utils.dp2px
 import com.cofbro.qian.utils.getStatusBarHeight
-import com.luck.picture.lib.basic.PictureSelector
-import com.luck.picture.lib.config.SelectMimeType
-import com.luck.picture.lib.entity.LocalMedia
-import com.luck.picture.lib.interfaces.OnResultCallbackListener
-import com.luck.picture.lib.utils.SandboxTransformUtils
+import com.cofbro.qian.view.dialog.SignReportDialog
 import com.alibaba.fastjson.JSONObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import java.io.File
-import java.io.FileOutputStream
 import java.util.concurrent.TimeUnit
 
 class ProfileFragment : BaseFragment<ProfileViewModel, FragmentProfileBinding>() {
@@ -75,9 +60,7 @@ class ProfileFragment : BaseFragment<ProfileViewModel, FragmentProfileBinding>()
         profileMessageInfo()
         checkSignWithStatus()
         updatePresetLocationStatus()
-        updatePresetPhotoStatus()
         updateAmapKeyStatus()
-        checkIMMonitorStatus()
     }
 
     private fun adjustContainerHeight() {
@@ -95,10 +78,6 @@ class ProfileFragment : BaseFragment<ProfileViewModel, FragmentProfileBinding>()
     private fun checkSignWithStatus() {
         val switch = requireActivity().getBySp("signWith")?.toBoolean() ?: false
         binding?.signWithButton?.isChecked = switch
-    }
-
-    private fun checkIMMonitorStatus() {
-        binding?.imMonitorSwitch?.isChecked = IMMonitorService.isEnabled(requireContext())
     }
 
     private fun adjustMarginOfView() {
@@ -200,8 +179,7 @@ class ProfileFragment : BaseFragment<ProfileViewModel, FragmentProfileBinding>()
         }
 
         binding?.signRecords?.setOnClickListener {
-            val intent = Intent(requireActivity(), SignRecordActivity::class.java)
-            startActivity(intent)
+            SignReportDialog(requireContext()).show()
         }
 
         binding?.exportCookie?.setOnClickListener {
@@ -216,134 +194,12 @@ class ProfileFragment : BaseFragment<ProfileViewModel, FragmentProfileBinding>()
             showAmapKeySettingDialog()
         }
 
-        binding?.groupSign?.setOnClickListener {
-            val intent = Intent(requireContext(), com.cofbro.qian.im.GroupListActivity::class.java)
-            startActivity(intent)
-        }
-
-        binding?.signFilter?.setOnClickListener {
-            val states = com.cofbro.qian.utils.SignFilterManager.getAllFilterStates()
-            val keys = com.cofbro.qian.utils.SignFilterManager.SIGN_TYPE_LABELS.keys.toList()
-            val labels = com.cofbro.qian.utils.SignFilterManager.SIGN_TYPE_LABELS
-            val items = keys.map { "${if (states[it] == true) "[x]" else "[ ]"} ${labels[it] ?: it}" }.toTypedArray()
-            val checked = keys.map { states[it] ?: true }.toMutableList()
-            androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                .setTitle("签到类型筛选")
-                .setMultiChoiceItems(items, checked.toBooleanArray()) { _, i, c -> checked[i] = c }
-                .setPositiveButton("保存") { _, _ -> keys.forEachIndexed { i, k -> com.cofbro.qian.utils.SignFilterManager.setAutoSignEnabled(k, checked[i]) }; ToastUtils.show("已保存") }
-                .setNeutralButton("全部开启") { _, _ -> com.cofbro.qian.utils.SignFilterManager.resetAll(); ToastUtils.show("已全部开启") }
-                .setNegativeButton("取消", null).show()
-        }
-
         binding?.presetLocation?.setOnClickListener {
             showPresetLocationDialog()
         }
 
-        binding?.imMonitorSwitch?.setOnClickListener {
-            val switch = it as SwitchCompat
-            val cookies = CacheUtils.getCurrentCookies()
-            if (switch.isChecked && cookies.isNullOrEmpty()) {
-                Toast.makeText(requireContext(), "请先登录后再开启IM监听", Toast.LENGTH_SHORT).show()
-                switch.isChecked = false
-                return@setOnClickListener
-            }
-            IMMonitorService.setEnabled(requireContext(), switch.isChecked)
-            if (switch.isChecked) {
-                Toast.makeText(requireContext(), "IM监听已开启", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(requireContext(), "IM监听已关闭", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        binding?.presetPhoto?.setOnClickListener {
-            selectPresetPhoto()
-        }
-
         binding?.helpGuide?.setOnClickListener {
             showHelpGuideDialog()
-        }
-    }
-
-    private fun selectPresetPhoto() {
-        PictureSelector
-            .create(this)
-            .openGallery(SelectMimeType.ofImage())
-            .setSandboxFileEngine { context, srcPath, mineType, call ->
-                if (call != null) {
-                    val sandboxPath = SandboxTransformUtils.copyPathToSandbox(context, srcPath, mineType)
-                    call.onCallback(srcPath, sandboxPath)
-                }
-            }
-            .setImageEngine(GlideEngine.createGlideEngine())
-            .setMaxSelectNum(1)
-            .forResult(object : OnResultCallbackListener<LocalMedia> {
-                override fun onResult(result: ArrayList<LocalMedia>?) {
-                    result?.get(0)?.let { media ->
-                        val path = media.availablePath
-                        copyToPresetPhoto(path)
-                    }
-                }
-
-                override fun onCancel() {
-                    Toast.makeText(requireContext(), "已取消", Toast.LENGTH_SHORT).show()
-                }
-            })
-    }
-
-    private fun copyToPresetPhoto(sourcePath: String) {
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                val dir = java.io.File(requireContext().getExternalFilesDir(null), "preset_photo")
-                if (!dir.exists()) dir.mkdirs()
-
-                // 删除旧照片
-                dir.listFiles()?.forEach { it.delete() }
-
-                // 复制新照片
-                val ext = sourcePath.substringAfterLast(".").lowercase()
-                val extName = if (ext in listOf("jpg", "jpeg", "png")) ext else "jpg"
-                val targetFile = File(dir, "preset.${extName}")
-                val sourceFile = File(sourcePath)
-                if (sourceFile.exists()) {
-                    sourceFile.copyTo(targetFile, overwrite = true)
-                } else {
-                    // content:// URI的情况
-                    try {
-                        val inputStream = requireContext().contentResolver.openInputStream(Uri.parse(sourcePath))
-                        inputStream?.use { input ->
-                            FileOutputStream(targetFile).use { output ->
-                                input.copyTo(output)
-                            }
-                        }
-                    } catch (e: Exception) {
-                        throw Exception("无法读取照片: ${e.message}")
-                    }
-                }
-
-                launch(Dispatchers.Main) {
-                    updatePresetPhotoStatus()
-                    Toast.makeText(requireContext(), "预设照片已设置: ${targetFile.name}", Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: Exception) {
-                launch(Dispatchers.Main) {
-                    Toast.makeText(requireContext(), "设置预设照片失败: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-    }
-
-    private fun updatePresetPhotoStatus() {
-        val photoDir = java.io.File(requireContext().getExternalFilesDir(null), "preset_photo")
-        val photoFile = if (photoDir.exists() && photoDir.isDirectory) {
-            photoDir.listFiles()?.firstOrNull { it.extension.lowercase() in listOf("jpg", "jpeg", "png") }
-        } else null
-
-        if (photoFile != null && photoFile.exists()) {
-            binding?.tvPresetPhotoStatus?.text = "${photoFile.name} (${photoFile.length() / 1024}KB)"
-            binding?.tvPresetPhotoStatus?.setTextColor(resources.getColor(android.R.color.holo_green_dark, null))
-        } else {
-            binding?.tvPresetPhotoStatus?.text = "未设置"
-            binding?.tvPresetPhotoStatus?.setTextColor(resources.getColor(android.R.color.darker_gray, null))
         }
     }
 
@@ -407,7 +263,7 @@ class ProfileFragment : BaseFragment<ProfileViewModel, FragmentProfileBinding>()
               在"个人中心→高德Key"中粘贴保存。
             ▸ 预设照片
               拍照验证签到需要。个人中心→预设照片→从相册选择。
-            ▸ 预设位置
+            ▸ 预留位置
               定位签到需要。个人中心→预留地址→添加常用位置。
             ▸ 登录账号
               超星学习通账号密码登录。
@@ -415,55 +271,35 @@ class ProfileFragment : BaseFragment<ProfileViewModel, FragmentProfileBinding>()
             🔹 扫码签到（推荐）
             首页右上角扫码 → 扫描老师展示的二维码 → 自动完成。
             扫码即签, 无需进课程找活动。
-            支持: 普通/二维码/定位/手势/签到码
+            支持: 普通/二维码/定位
 
-            🔹 防作弊扫一扫
-            首页"防作弊"按钮, 扫码后有4种模式:
-            • 智能签到(推荐): 自动检测验证码/人脸/照片, 预处理后一次性签
-            • 验证码签到: 滑块验证码 / 文字输入
-            • 人脸识别绕过: 4种方式
-            • 照片验证签到: 上传预设照片
-
-            🔹 智能预检流程
-            签到前先查 ifNeedVCode / openCheckFaceFlag / ifPhoto
-            → 处理验证码 → 处理人脸 → 上传照片 → 一次性签到
-            所有参数准备好再签, 不浪费enc。
-
-            🔹 查签到
-            首页"查签到" → 自动扫描所有课程进行中的签到 → 点击签到。
-
-            🔹 群聊签到
-            个人中心"群聊签到" → 查看IM群聊中的签到活动。
+            🔹 智能签到
+            签到前先查 ifNeedVCode 等参数, 提前处理好验证码
+            再一次性签到, 不浪费enc。
 
             🔹 定位签到
             个人中心→预留地址 设置常用位置。
             签到自动尝试当前位置, 失败后遍历预留地址。
 
-            🔹 手势/签到码暴力破解
-            手势: 4-6位不重复数字排列(约8万种)
-            签到码: 4-6位数字组合
+            🔹 手势签到 / 签到码
+            进课程 → 活动列表 → 手势/签到码活动 → "输入密码"
+            画出手势(或输入签到码)提交, 输错可原地重试。
 
             🔹 代签功能
             个人中心开启"代签所有绑定账号"。
             签到成功后自动为绑定账号签到。
             代签账号建议同时保存手机号+密码(支持自动重登)。
 
-            🔹 IM监听签到
-            个人中心开启"IM监听", 后台监听签到通知自动签到。
-
-            🔹 预设照片
-            个人中心→预设照片→从相册选择。
-            用于拍照验证和人脸识别。
-
-            🔹 手动签到(Debug)
-            首页"LOG" → "🔧 手动签到"。
-            自动失败时可手动填参数补签。
+            🔹 签到报告
+            首页"LOG"或 个人中心→签到报告,
+            查看签到全过程日志, 可复制反馈。
 
             🔹 注意事项
             • 定位签到需要开启GPS
             • 二维码签到enc一次性, 失败需重新扫码
+            • 需要人脸/拍照验证的签到无法自动提交
             • 代签需提前绑定账号
-            • 日志包含详细签到过程, 失败时可查看
+            • 签到失败时, 签到报告里有完整过程可排查
         """.trimIndent()
 
         val scrollView = android.widget.ScrollView(requireContext())

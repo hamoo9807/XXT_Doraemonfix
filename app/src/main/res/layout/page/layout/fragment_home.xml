@@ -46,21 +46,6 @@
             app:layout_constraintTop_toTopOf="@+id/iv_user_avtar" />
 
         <TextView
-            android:id="@+id/iv_fetch_sign_btn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:background="#80000000"
-            android:paddingHorizontal="6dp"
-            android:paddingVertical="2dp"
-            android:text="查签到"
-            android:textColor="#FFFFFF"
-            android:textSize="10sp"
-            app:layout_constraintBottom_toBottomOf="@+id/iv_user_avtar"
-            app:layout_constraintEnd_toStartOf="@+id/iv_debug_btn"
-            app:layout_constraintTop_toTopOf="@+id/iv_user_avtar" />
-
-        <TextView
             android:id="@+id/iv_debug_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -69,21 +54,6 @@
             android:paddingHorizontal="6dp"
             android:paddingVertical="2dp"
             android:text="LOG"
-            android:textColor="#FFFFFF"
-            android:textSize="10sp"
-            app:layout_constraintBottom_toBottomOf="@+id/iv_user_avtar"
-            app:layout_constraintEnd_toStartOf="@+id/tv_anti_cheat_btn"
-            app:layout_constraintTop_toTopOf="@+id/iv_user_avtar" />
-
-        <TextView
-            android:id="@+id/tv_anti_cheat_btn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:background="#80000000"
-            android:paddingHorizontal="6dp"
-            android:paddingVertical="2dp"
-            android:text="防作弊"
             android:textColor="#FFFFFF"
             android:textSize="10sp"
             app:layout_constraintBottom_toBottomOf="@+id/iv_user_avtar"

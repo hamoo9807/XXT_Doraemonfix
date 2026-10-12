@@ -3,7 +3,57 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
-buildDir = file("${rootProject.buildDir}/app_v9")
+// ==================== APK 版本号 ====================
+// 版本号存于根目录 version.properties: 打包时读取它命名APK, 打包成功后次版本号自动 +1 (9.1 → 9.2)
+// 想升主版本时手动改 version.properties, 例如改成 10.0
+def versionFile = rootProject.file("version.properties")
+def versionProps = new Properties()
+if (versionFile.exists()) {
+    versionFile.withReader('UTF-8') { versionProps.load(it) }
+}
+def apkVersion = (versionProps.getProperty("version") ?: "9.1").trim()
+// versionCode 用 主版本*10000+次版本, 保证覆盖安装时单调递增 (v9.1 → 90001)
+def apkVersionCode = {
+    def parts = apkVersion.split("\\.")
+    parts[0].toInteger() * 10000 + (parts.length > 1 ? parts[1].toInteger() : 0)
+}()
+
+// 每个版本打包到独立的父文件夹 (build/app_v9.2 → 下个版本 build/app_v9.3)
+// 这样上一个版本的APK被安装/复制占用时, 不会导致本次打包删不掉旧文件而失败
+buildDir = file("${rootProject.buildDir}/app_v${apkVersion}")
+// 打包成功后执行:
+// 1) 写回下一个版本号 —— 放在成功后, 构建失败/中断不消耗版本号
+// 2) 复制APK到根目录 apk/ —— 以后从 apk/ 安装, 占用的不是build目录里的文件,
+//    不会因为文件被占用导致下次打包删不掉目录而失败
+def afterPackaging = {
+    def parts = apkVersion.split("\\.")
+    if (parts.length >= 2) {
+        def nextVersion = "${parts[0].toInteger()}.${parts[1].toInteger() + 1}"
+        versionFile.setText("""# APK 版本号 (打包时读取此值命名 APK, 打包成功后次版本号自动 +1)
+# 本次产出 v${apkVersion}, 已自动写为 ${nextVersion}
+# 想升主版本时手动改这里, 例如改成 10.0
+version=${nextVersion}
+""", 'UTF-8')
+    }
+    copy {
+        from("${project.buildDir}/outputs/apk") {
+            include '**/*.apk'
+            eachFile { it.path = it.name }
+            includeEmptyDirs = false
+        }
+        into rootProject.file("apk")
+    }
+}
+// 仅在真正打包时挂载(编译/sync 不动版本号、不复制)
+def isPackaging = gradle.startParameter.taskNames.any {
+    def n = it.toLowerCase()
+    n.contains("assemble") || n.contains("package")
+}
+if (isPackaging) {
+    tasks.matching { it.name == 'assembleDebug' || it.name == 'assembleRelease' }.configureEach { t ->
+        t.doLast { afterPackaging() }
+    }
+}
 
 android {
     namespace 'com.cofbro.qian'
@@ -15,8 +65,8 @@ android {
         applicationId "com.cofbro.qian"
         minSdk 24
         targetSdk 33
-        versionCode 1
-        versionName "${releaseTime()}"
+        versionCode apkVersionCode
+        versionName apkVersion
         ndk {
             abiFilters 'arm64-v8a'
         }
@@ -40,15 +90,6 @@ android {
         variant.outputs.all { output ->
             def newName = "Doraemon-fix-v${variant.versionName}.apk"
             outputFileName = newName
-        }
-    }
-
-    signingConfigs {
-        release {
-            storeFile rootProject.file("signingkey.jks")
-            storePassword System.getenv("KEY_STORE_PASSWORD")
-            keyAlias System.getenv("ALIAS")
-            keyPassword System.getenv("KEY_PASSWORD")
         }
     }
 
@@ -126,6 +167,11 @@ dependencies {
     implementation 'com.github.jenly1314.WeChatQRCode:opencv-armv64:2.3.0'
     // 微信二维码识别功能
     implementation 'com.github.jenly1314.WeChatQRCode:wechat-qrcode:2.3.0'
+    // CameraX 全屏扫码 (预览 + 逐帧分析; 版本与本机 Gradle 缓存一致, 可离线构建)
+    implementation 'androidx.camera:camera-core:1.2.0-alpha01'
+    implementation 'androidx.camera:camera-camera2:1.2.0-alpha01'
+    implementation 'androidx.camera:camera-lifecycle:1.2.0-alpha01'
+    implementation 'androidx.camera:camera-view:1.2.0-alpha01'
     // okhttp
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
     // refreshLayout
@@ -149,10 +195,4 @@ dependencies {
     implementation "org.apache.directory.studio:org.apache.commons.codec:1.8"
     // lottie
     implementation "com.airbnb.android:lottie:6.1.0"
-    // 环信IM SDK (学习通IM基于环信)
-    implementation 'io.hyphenate:hyphenate-chat:4.1.0'
-}
-
-static def releaseTime() {
-    return new Date().format("yyyyMMddHHmmss", TimeZone.getTimeZone("UTC"))
 }

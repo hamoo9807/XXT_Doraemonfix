@@ -91,7 +91,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
-                    android:text="签到日志"
+                    android:text="签到报告"
                     android:textColor="@color/black"
                     app:layout_constraintBottom_toBottomOf="@+id/imageView"
                     app:layout_constraintStart_toEndOf="@+id/imageView"
@@ -133,74 +133,6 @@
             </androidx.constraintlayout.widget.ConstraintLayout>
 
             <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/group_sign"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="12dp"
-                android:layout_marginEnd="16dp"
-                android:background="@drawable/app_white_radius_bg"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/bind_accounts">
-
-                <ImageView
-                    android:id="@+id/imageViewGroupSign"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_marginStart="16dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:srcCompat="@drawable/ic_profile_association" />
-
-                <TextView
-                    android:id="@+id/textViewGroupSign"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:text="群聊签到"
-                    android:textColor="@color/black"
-                    app:layout_constraintBottom_toBottomOf="@+id/imageViewGroupSign"
-                    app:layout_constraintStart_toEndOf="@+id/imageViewGroupSign"
-                    app:layout_constraintTop_toTopOf="@+id/imageViewGroupSign" />
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/all_notification"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="12dp"
-                android:layout_marginEnd="16dp"
-                android:background="@drawable/app_white_radius_bg"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/group_sign">
-
-                <ImageView
-                    android:id="@+id/imageView19"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:srcCompat="@drawable/ic_profile_notification" />
-
-                <TextView
-                    android:id="@+id/textView45"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:text="所有通知"
-                    android:textColor="@color/black"
-                    app:layout_constraintBottom_toBottomOf="@+id/imageView19"
-                    app:layout_constraintStart_toEndOf="@+id/imageView19"
-                    app:layout_constraintTop_toTopOf="@+id/imageView19" />
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-            <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/export_cookie"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
@@ -210,7 +142,7 @@
                 android:background="@drawable/app_white_radius_bg"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/all_notification">
+                app:layout_constraintTop_toBottomOf="@+id/bind_accounts">
 
                 <ImageView
                     android:id="@+id/imageViewExport"
@@ -408,131 +340,6 @@
             </androidx.constraintlayout.widget.ConstraintLayout>
 
             <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/preset_photo"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="12dp"
-                android:layout_marginEnd="16dp"
-                android:background="@drawable/app_white_radius_bg"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/amap_key_setting">
-
-                <ImageView
-                    android:id="@+id/imageViewPresetPhoto"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_marginStart="16dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:srcCompat="@drawable/ic_profile_association" />
-
-                <TextView
-                    android:id="@+id/tv_preset_photo_label"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:text="预设照片"
-                    android:textColor="@color/black"
-                    app:layout_constraintBottom_toBottomOf="@+id/imageViewPresetPhoto"
-                    app:layout_constraintStart_toEndOf="@+id/imageViewPresetPhoto"
-                    app:layout_constraintTop_toTopOf="@+id/imageViewPresetPhoto" />
-
-                <TextView
-                    android:id="@+id/tv_preset_photo_status"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="16dp"
-                    android:text="未设置"
-                    android:textColor="#999999"
-                    android:textSize="12sp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/im_monitor"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="12dp"
-                android:layout_marginEnd="16dp"
-                android:background="@drawable/app_white_radius_bg"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/preset_photo">
-
-                <ImageView
-                    android:id="@+id/imageViewImMonitor"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_marginStart="16dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:srcCompat="@drawable/ic_profile_association" />
-
-                <TextView
-                    android:id="@+id/tv_im_monitor_label"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:text="IM监听"
-                    android:textColor="@color/black"
-                    app:layout_constraintBottom_toBottomOf="@+id/imageViewImMonitor"
-                    app:layout_constraintStart_toEndOf="@+id/imageViewImMonitor"
-                    app:layout_constraintTop_toTopOf="@+id/imageViewImMonitor" />
-
-                <androidx.appcompat.widget.SwitchCompat
-                    android:id="@+id/im_monitor_switch"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="3dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:thumbTint="@color/appColor"
-                    app:track="@drawable/switch_track_bg"
-                    tools:ignore="UseSwitchCompatOrMaterialXml" />
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/sign_filter"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="12dp"
-                android:layout_marginEnd="16dp"
-                android:background="@drawable/app_white_radius_bg"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/im_monitor">
-
-                <ImageView
-                    android:id="@+id/imageViewSignFilter"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_marginStart="16dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:srcCompat="@drawable/ic_profile_association" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:text="签到筛选"
-                    android:textColor="@color/black"
-                    app:layout_constraintBottom_toBottomOf="@+id/imageViewSignFilter"
-                    app:layout_constraintStart_toEndOf="@+id/imageViewSignFilter"
-                    app:layout_constraintTop_toTopOf="@+id/imageViewSignFilter" />
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-            <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/help_guide"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
@@ -542,7 +349,7 @@
                 android:background="@drawable/app_white_radius_bg"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/sign_filter">
+                app:layout_constraintTop_toBottomOf="@+id/amap_key_setting">
 
                 <ImageView
                     android:id="@+id/imageViewHelpGuide"

@@ -433,37 +433,6 @@ object Constants {
         const val HISTORY = "history"
     }
 
-    /**
-     * {
-     *     "size": "2"
-     *     "records": [
-     *         {
-     *             "uid": "000",
-     *             "username": "cofbro",
-     *             "courseName": "数学",
-     *             "time": "2023.10.31 11:00:00",
-     *             "status": "success"
-     *         },
-     *         {
-     *             "uid": "000",
-     *             "username": "cofbro",
-     *             "courseName": "语文",
-     *             "time": "2023.10.31 11:00:00",
-     *             "status": "success"
-     *         }
-     *       ]
-     * }
-     */
-    object Recorder {
-        const val FILE_NAME = "sign_record"
-        const val UID = "uid"
-        const val COURSE_NAME = "courseName"
-        const val TIME = "time"
-        const val STATUS = "status"
-        const val SIZE = "size"
-        const val RECORDS = "records"
-    }
-
     object USER {
         const val USERNAME = "username"
         const val UID = "uid"

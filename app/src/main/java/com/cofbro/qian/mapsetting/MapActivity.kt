@@ -46,7 +46,7 @@ import com.cofbro.qian.utils.AccountManager
 import com.cofbro.qian.utils.AmapUtils
 import com.cofbro.qian.utils.CacheUtils
 import com.cofbro.qian.utils.PresetLocationManager
-import com.cofbro.qian.utils.SignRecorder
+import com.cofbro.qian.utils.DebugLogCollector
 import com.cofbro.qian.utils.dp2px
 import com.cofbro.qian.utils.getStringExt
 import com.cofbro.qian.utils.safeParseToJson
@@ -503,7 +503,7 @@ class MapActivity : BaseActivity<MapViewModel, ActivityMapBinding>(), AMap.OnMar
         val courseName = viewModel.courseName
         val statusName = if (status) "成功" else "失败"
         val username = if (remark.isNotEmpty()) "$uid - ($remark)" else uid
-        SignRecorder.record(applicationContext, username, courseName!!, statusName)
+        DebugLogCollector.d("MapSign", "定位签到: $username @$courseName -> $statusName")
     }
 
     private suspend fun analysisAndStartSign(aid: String) {
@@ -1001,11 +1001,5 @@ class MapActivity : BaseActivity<MapViewModel, ActivityMapBinding>(), AMap.OnMar
         }
         return url.replace(" ", "%20")
     }
-
-    override fun onStop() {
-        super.onStop()
-        SignRecorder.writeJson(applicationContext)
-    }
-
 
 }

@@ -1,23 +1,30 @@
 package com.cofbro.qian.scan
 
 import android.Manifest
-import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.PixelFormat
 import android.net.Uri
 import android.os.Bundle
 import android.os.Vibrator
 import android.util.Log
+import android.util.Size
 import android.view.ViewGroup.MarginLayoutParams
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.camera.core.Camera
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageProxy
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
-import cn.bingoogolapple.qrcode.core.QRCodeView
+import com.cofbro.qian.R
 import com.cofbro.qian.databinding.ActivityScanBinding
 import com.cofbro.qian.utils.GlideEngine
 import com.cofbro.qian.utils.dp2px
@@ -37,12 +44,24 @@ import kotlinx.coroutines.launch
 import org.opencv.OpenCV
 import java.io.BufferedInputStream
 import java.io.File
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 
-class ScanActivity : AppCompatActivity(), QRCodeView.Delegate {
+/**
+ * 全屏扫码页 (CameraX + 微信 OpenCV 识别引擎)
+ *
+ * - 相机预览全屏无扫描框, 取景范围内任意位置的二维码均可识别
+ * - 实时帧交给 WeChatQRCodeDetector(与相册解码同一引擎), 命中后震动并回传结果
+ * - 支持手电筒开关; 相册选图解码作为补充入口
+ * - 结果仍通过 Intent extra "result" 回传, 调用方(HomeFragment/TaskFragment)无需改动
+ */
+class ScanActivity : AppCompatActivity() {
     private companion object {
         const val TAG = "ScanActivity"
         const val REQUEST_CODE_PERMISSIONS = 1001
+        const val ANALYSIS_WIDTH = 1280
+        const val ANALYSIS_HEIGHT = 720
     }
 
     private var binding: ActivityScanBinding? = null
@@ -50,6 +69,17 @@ class ScanActivity : AppCompatActivity(), QRCodeView.Delegate {
     private val REQUIRED_PERMISSIONS = arrayOf(
         Manifest.permission.CAMERA
     )
+
+    private var cameraProvider: ProcessCameraProvider? = null
+    private var camera: Camera? = null
+    private var torchOn = false
+
+    /** 已识别到结果, 阻止后续帧重复回调 */
+    @Volatile
+    private var isResultHandled = false
+    private var engineNotReadyLogged = false
+
+    private val analysisExecutor: ExecutorService by lazy { Executors.newSingleThreadExecutor() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,13 +93,16 @@ class ScanActivity : AppCompatActivity(), QRCodeView.Delegate {
         WeChatQRCodeDetector.init(this)
         initView()
         initEvent()
-        binding?.scanner?.setDelegate(this)
         checkAndRequestPermissions()
     }
 
     private fun initEvent() {
         binding?.ivToPhoto?.setOnClickListener {
             toGalleryAndDecode()
+        }
+
+        binding?.ivFlash?.setOnClickListener {
+            toggleTorch()
         }
 
         binding?.ivBack?.setOnClickListener {
@@ -89,7 +122,7 @@ class ScanActivity : AppCompatActivity(), QRCodeView.Delegate {
             == PackageManager.PERMISSION_GRANTED
         ) {
             hasCameraPermission = true
-            startScanner()
+            startCamera()
         } else {
             ActivityCompat.requestPermissions(
                 this,
@@ -108,7 +141,7 @@ class ScanActivity : AppCompatActivity(), QRCodeView.Delegate {
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 hasCameraPermission = true
-                startScanner()
+                startCamera()
             } else {
                 Toast.makeText(this, "需要相机权限才能扫码", Toast.LENGTH_LONG).show()
                 if (!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)) {
@@ -118,57 +151,128 @@ class ScanActivity : AppCompatActivity(), QRCodeView.Delegate {
         }
     }
 
-    private fun startScanner() {
+    private fun startCamera() {
+        val future = ProcessCameraProvider.getInstance(this)
+        future.addListener({
+            try {
+                bindUseCases(future.get())
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to start camera", e)
+                Toast.makeText(this, "相机启动失败", Toast.LENGTH_SHORT).show()
+            }
+        }, ContextCompat.getMainExecutor(this))
+    }
+
+    private fun bindUseCases(provider: ProcessCameraProvider) {
+        cameraProvider = provider
+
+        val preview = Preview.Builder().build().also {
+            it.setSurfaceProvider(binding?.previewView?.surfaceProvider)
+        }
+
+        val imageAnalysis = ImageAnalysis.Builder()
+            .setTargetResolution(Size(ANALYSIS_WIDTH, ANALYSIS_HEIGHT))
+            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+            .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
+            .build()
+        imageAnalysis.setAnalyzer(analysisExecutor) { image -> analyzeFrame(image) }
+
         try {
-            binding?.scanner?.startCamera()
-            binding?.scanner?.startSpotAndShowRect()
+            provider.unbindAll()
+            camera = provider.bindToLifecycle(
+                this,
+                CameraSelector.DEFAULT_BACK_CAMERA,
+                preview,
+                imageAnalysis
+            )
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to start scanner", e)
-            Toast.makeText(this, "相机启动失败", Toast.LENGTH_SHORT).show()
+            Log.e(TAG, "Failed to bind camera use cases", e)
+            Toast.makeText(this, "相机打开失败，请检查权限", Toast.LENGTH_LONG).show()
         }
     }
 
-    override fun onScanQRCodeSuccess(result: String?) {
-        vibrate()
-        sendResult(result)
-    }
-
-    override fun onCameraAmbientBrightnessChanged(isDark: Boolean) {
-        var tipText: String? = binding?.scanner?.scanBoxView?.tipText
-        if (tipText?.isEmpty() == true) return
-        val ambientBrightnessTip = "\n环境过暗，请打开闪光灯"
-        if (isDark) {
-            if (!tipText!!.contains(ambientBrightnessTip)) {
-                binding?.scanner?.scanBoxView?.tipText = tipText + ambientBrightnessTip
+    /**
+     * 逐帧识别: ImageProxy(RGBA_8888) -> Bitmap -> 微信识别引擎
+     * 单线程串行执行, 配合 STRATEGY_KEEP_ONLY_LATEST 自动丢弃积压帧
+     */
+    private fun analyzeFrame(image: ImageProxy) {
+        try {
+            if (isResultHandled) return
+            val bitmap = image.toRgbaBitmap() ?: return
+            val text = try {
+                WeChatQRCodeDetector.detectAndDecode(bitmap).firstOrNull { !it.isNullOrBlank() }
+            } catch (e: Exception) {
+                // OpenCV/识别模型尚未初始化完成时忽略该帧, 后续帧会重试
+                if (!engineNotReadyLogged) {
+                    engineNotReadyLogged = true
+                    Log.w(TAG, "识别引擎未就绪, 跳过当前帧", e)
+                }
+                null
+            } finally {
+                bitmap.recycle()
             }
-        } else {
-            if (tipText!!.contains(ambientBrightnessTip)) {
-                tipText = tipText.substring(0, tipText.indexOf(ambientBrightnessTip))
-                binding?.scanner?.scanBoxView?.tipText = tipText
+            if (!text.isNullOrBlank()) {
+                isResultHandled = true
+                runOnUiThread {
+                    vibrate()
+                    sendResult(text)
+                }
             }
+        } catch (e: Exception) {
+            Log.w(TAG, "analyze frame error", e)
+        } finally {
+            image.close()
         }
     }
 
-    override fun onScanQRCodeOpenCameraError() {
-        Log.e(TAG, "Camera open error")
-        Toast.makeText(this, "相机打开失败，请检查权限", Toast.LENGTH_LONG).show()
-    }
-
-    override fun onStart() {
-        super.onStart()
-        if (hasCameraPermission) {
-            startScanner()
+    /**
+     * ImageProxy -> Bitmap
+     * RGBA_8888 输出下每行可能存在 padding, 先按 rowStride 建图再裁剪
+     */
+    private fun ImageProxy.toRgbaBitmap(): Bitmap? {
+        if (format != PixelFormat.RGBA_8888) return null
+        val plane = planes.firstOrNull() ?: return null
+        val buffer = plane.buffer
+        buffer.rewind()
+        val pixelStride = plane.pixelStride
+        if (pixelStride <= 0) return null
+        val rowPadding = plane.rowStride - pixelStride * width
+        val paddedWidth = width + rowPadding / pixelStride
+        var bitmap = Bitmap.createBitmap(paddedWidth, height, Bitmap.Config.ARGB_8888)
+        return try {
+            bitmap.copyPixelsFromBuffer(buffer)
+            if (paddedWidth != width) {
+                val cropped = Bitmap.createBitmap(bitmap, 0, 0, width, height)
+                bitmap.recycle()
+                bitmap = cropped
+            }
+            bitmap
+        } catch (e: Exception) {
+            bitmap.recycle()
+            Log.w(TAG, "ImageProxy -> Bitmap failed", e)
+            null
         }
     }
 
-    override fun onStop() {
-        binding?.scanner?.stopCamera()
-        super.onStop()
+    private fun toggleTorch() {
+        val cam = camera ?: return
+        if (!cam.cameraInfo.hasFlashUnit()) {
+            Toast.makeText(this, "当前设备不支持闪光灯", Toast.LENGTH_SHORT).show()
+            return
+        }
+        torchOn = !torchOn
+        cam.cameraControl.enableTorch(torchOn)
+        binding?.ivFlash?.setImageResource(
+            if (torchOn) R.drawable.ic_flash_on else R.drawable.ic_flash_off
+        )
     }
 
     override fun onDestroy() {
-        binding?.scanner?.destroyDrawingCache()
-        binding?.scanner?.onDestroy()
+        try {
+            cameraProvider?.unbindAll()
+        } catch (_: Exception) {
+        }
+        analysisExecutor.shutdown()
         super.onDestroy()
     }
 
