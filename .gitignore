@@ -1,7 +1,10 @@
 # ---- 构建产物 ----
 /build
 /app/build
+.gradle/
 /apk
+*.apk
+*.aab
 /captures
 .externalNativeBuild
 .cxx
