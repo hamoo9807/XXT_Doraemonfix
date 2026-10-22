@@ -1,4 +1,4 @@
-# Doraemon — 学习通智能签到助手
+# Doraemonfix — 学习通智能签到助手
 
 基于 [CofbroTeam/Doraemon](https://github.com/CofbroTeam/Doraemon) 二次开发，参考 [aquamarine5/ChaoxingSignFaker](https://github.com/aquamarine5/ChaoxingSignFaker) 架构。
 
